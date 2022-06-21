@@ -20,6 +20,7 @@ jobs:
       - name: build onnxruntime
         shell: cmd
         run: |
+          set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cd onnxruntime
           build.bat --build_shared_lib --enable_pybind --build_wheel --config RelWithDebInfo --parallel --cmake_generator "Visual Studio 17 2022" --skip_tests
