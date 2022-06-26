@@ -29,7 +29,7 @@ jobs:
           set PATH=%ProgramFiles%\Git\usr\bin;C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
           cd onnxruntime
           git fetch --tags --recurse-submodules=no
-          build.bat --update --build --skip_submodule_sync --build_shared_lib --enable_pybind --build_wheel --config RelWithDebInfo --parallel --cmake_generator "Visual Studio 17 2022"
+          build.bat --update --build --skip_submodule_sync --build_shared_lib --enable_pybind --numpy_version 1.21.3 --build_wheel --config RelWithDebInfo --parallel --cmake_generator "Visual Studio 17 2022"
       - name: upload artifacts
         uses: actions/upload-artifact@v3.1.0
         with:
@@ -100,7 +100,7 @@ jobs:
           sudo python3 -m pip install wheel
           sudo python3 -m pip install -r 'tools/ci_build/github/linux/docker/scripts/requirements.txt'
           sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
-          ./build.sh --update --build --skip_submodule_sync --build_shared_lib --enable_pybind --build_wheel --config Release --parallel --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+          ./build.sh --update --build --skip_submodule_sync --build_shared_lib --enable_pybind --build_wheel --numpy_version 1.21.3 --config Release --parallel --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="x86_64;arm64"
           mkdir -p ../wheels-darwin
           zsh -c 'cp -v build/**/dist/*.whl ../wheels-darwin'
       - name: upload artifacts
