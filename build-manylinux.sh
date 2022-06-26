@@ -3,4 +3,4 @@ pip install cmake numpy
 git config --global --add safe.directory '*'
 cd /vol
 
-bash ./build-posix.sh
+bash ./build-linux.sh

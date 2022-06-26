@@ -29,7 +29,7 @@ jobs:
           set PATH=%ProgramFiles%\Git\usr\bin;C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
           cd onnxruntime
           git fetch --tags --recurse-submodules=no
-          build.bat --build_shared_lib --enable_pybind --build_wheel --config RelWithDebInfo --parallel --cmake_generator "Visual Studio 17 2022" --skip_tests
+          build.bat --update --build --skip_submodule_sync --build_shared_lib --enable_pybind --build_wheel --config RelWithDebInfo --parallel --cmake_generator "Visual Studio 17 2022"
       - name: upload artifacts
         uses: actions/upload-artifact@v3.1.0
         with:
@@ -71,3 +71,49 @@ jobs:
           body: ""
           files: |
             wheels-linux/*.whl
+
+  build-darwin:
+    runs-on: macos-11
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Setup Python
+        uses: actions/setup-python@v4.0.0
+        with:
+          python-version: "3.10"
+      - name: build onnxruntime
+        shell: bash
+        run: |
+          rootdir="$(pwd)"
+          echo "rootdir: $rootdir"
+          cd onnxruntime
+          git fetch --tags --recurse-submodules=no
+          export _PYTHON_HOST_PLATFORM=macosx-10.9-universal2
+          pushd cmake/external/protobuf
+          cmake ./cmake -DCMAKE_INSTALL_PREFIX="$rootdir/protobuf" -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Relwithdebinfo
+          cmake --build . --target install
+          popd
+          PATH="$rootdir/protobuf/bin:$PATH"
+          export CMAKE_ARGS="-DONNX_GEN_PB_TYPE_STUBS=OFF -DONNX_WERROR=OFF"
+          sudo python3 -m pip install wheel
+          sudo python3 -m pip install -r 'tools/ci_build/github/linux/docker/scripts/requirements.txt'
+          sudo xcode-select --switch /Applications/Xcode_12.4.app/Contents/Developer
+          ./build.sh --update --build --skip_submodule_sync --build_shared_lib --enable_pybind --build_wheel --config Release --parallel --cmake_extra_defines CMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+          mkdir -p ../wheels-darwin
+          zsh -c 'cp -v build/**/dist/*.whl ../wheels-darwin'
+      - name: upload artifacts
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: dist
+          path: wheels-darwin
+      - name: release
+        uses: "softprops/action-gh-release@v1"
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          name: "onnxruntime ${{github.ref_name}}"
+          tag_name: "${{github.ref_name}}"
+          body: ""
+          files: |
+            wheels-darwin/*.whl
